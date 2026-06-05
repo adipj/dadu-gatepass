@@ -1,4 +1,3 @@
-// src/utils/qrCrypto.ts
 import crypto from 'node:crypto';
 import process from 'node:process';
 

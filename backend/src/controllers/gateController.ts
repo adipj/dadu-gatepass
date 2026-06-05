@@ -1,12 +1,20 @@
 // src/controllers/gateController.ts
 import { PrismaClient } from '@prisma/client';
 import { verifyQRData } from '../utils/qrCrypto';
+import { Request, Response } from 'express';
+
+interface CustomReq extends Request {
+    user? : {
+        id: string;
+        role: string;
+    }
+}
 
 const prisma = new PrismaClient();
 
-export const scanQR = async (req : any, res : any) => {
+export const scanQR = async (req : CustomReq, res : Response) => {
     const { pass_id, iat, sig } = req.body;
-    const security_id = req.user.id;
+    const security_id = req.user!.id;
 
     // 1. Stateless Verification
     if (!verifyQRData(pass_id, iat, sig)) {
@@ -45,7 +53,7 @@ export const scanRFID = async (req : any, res : any) => {
     res.json({ message: 'Vehicle Access Granted', pass: rfid.pass });
 };
 
-async function logGateAction(pass_id : String, checked_by : any, action : any, method : any) {
+async function logGateAction(pass_id : string, checked_by : any, action : any, method : any) {
     await prisma.gateLog.create({
         data: { pass_id, checked_by, action, method }
     });

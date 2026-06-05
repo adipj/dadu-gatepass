@@ -3,14 +3,21 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
-export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+interface CustomReq extends Request {
+    user?: {
+        id: string;
+        role: string;
+    }
+}
+
+export const requireAuth = (req: CustomReq, res: Response, next: NextFunction) => {
     const token = req.headers.authorization?.split(' ')[1];
 
     if (!token) return res.status(401).json({ error: 'Unauthorized: No token provided' });
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        req.user = decoded; // Attach user payload { id, role } to request
+        req.user = decoded as {id: string; role: string};
         next();
     } catch (err) {
         res.status(403).json({ error: 'Forbidden: Invalid token' });
@@ -18,7 +25,7 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
 };
 
 export const requireRoles = (allowedRoles: string[]) => {
-    return (req: Request, res: Response, next: NextFunction) => {
+    return (req: CustomReq, res: Response, next: NextFunction) => {
         if (!req.user || !allowedRoles.includes(req.user.role)) {
             return res.status(403).json({ error: 'Forbidden: Insufficient permissions' });
         }

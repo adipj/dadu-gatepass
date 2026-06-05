@@ -1,11 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { Request, Response } from 'express';
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
-export const login = async (req, res) => {
+export const login = async (req: Request, res: Response) => {
     const { phone, password } = req.body;
 
     const user = await prisma.user.findUnique({ where: { phone } });

@@ -9,7 +9,6 @@ app.use(cors());
 app.use(helmet());
 app.use(express.json());
 
-// Main API Router
 app.use('/api', apiRoutes);
 
 const PORT = process.env.PORT || 3000;
