@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { login, signup } from '../controllers/auth';
+import { login, visitorQR } from '../controllers/authController';
+import { getOTP, confirmOTP } from '../middlewares/otp';
 import { approvePass } from '../controllers/passController'; 
 import { scanQR, scanRFID } from '../controllers/gateController'; 
 import { requireAuth, requireRoles, swdApiKeyGuard } from '../middlewares/authGuard';
@@ -7,7 +8,8 @@ import { requireAuth, requireRoles, swdApiKeyGuard } from '../middlewares/authGu
 const router = Router();
 
 router.post('/auth/login', login);
-router.post('/signup', signup);
+router.post('/visitor/login', getOTP, confirmOTP, visitorQR);
+
 router.post('/gate/scan-qr', requireAuth, requireRoles(['GATE_SECURITY']), scanQR);
 router.post('/gate/scan-rfid', requireAuth, requireRoles(['GATE_SECURITY']), scanRFID);
 
@@ -24,7 +26,6 @@ router.put(
     approvePass
 );
 
-// 4. SWD Prefix (Bypasses JWT, uses API Key instead)
 const swdRouter = Router();
 swdRouter.get('/student-passes', /* Fetch passes logic */);
 router.use('/swd', swdApiKeyGuard, swdRouter);

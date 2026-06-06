@@ -6,14 +6,24 @@ const prisma = new PrismaClient();
 export const sendMockOTP = async (phone: string) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit OTP
 
-    // Hash it so if DB is breached, OTPs aren't compromised
     const otp_hash = crypto.createHash('sha256').update(otp).digest('hex');
-    const expires_at = new Date(Date.now() + 10 * 60000); // 10 mins validity
+    const expires_at = new Date(Date.now() + 5 * 60000); //5 min validity
 
     await prisma.otpRecord.create({
         data: { phone, otp_hash, expires_at }
     });
 
     console.log(`\n[DEV MOCK] SMS Sent to ${phone}: Your Gatepass code is ${otp}\n`);
+    return true;
+};
+
+
+export const verifyOTP = async (phone: string, otp: string)  => {
+    const otp_hash = crypto.createHash('sha256').update(otp).digest('hex');
+    const otp_record = await prisma.otpRecord.findUnique({ where: { phone: phone } });
+    if (!otp_record || otp_hash != otp_record.otp_hash || otp_record.expires_at < new Date()){
+        return false;
+    }
+    await prisma.otpRecord.delete({ where: {phone: phone} });
     return true;
 };

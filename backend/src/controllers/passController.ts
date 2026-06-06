@@ -17,12 +17,6 @@ export const approvePass = async (req : CustomReq, res : Response) => {
             data: { status: 'APPROVED', approved_by: approver_id }
         });
 
-        if (updatedPass.type === 'VEHICLE_RFID') {
-            await prisma.rfidTag.create({
-                data: { pass_id: updatedPass.id }
-            });
-        }
-
         res.json(updatedPass);
     } catch (error) {
         res.status(500).json({ error: 'Internal server error' });

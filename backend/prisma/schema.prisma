@@ -39,6 +39,11 @@ enum ScanMethod {
   RFID
 }
 
+enum Status {
+  ON_CAMPUS
+  OFF_CAMPUS
+}
+
 model User {
   id              String      @id @default(uuid())
   name            String
@@ -46,6 +51,7 @@ model User {
   password_hash   String?     
   role            Role
   phone           String      @unique
+  status          Status
 
   passes_held     Pass[]      @relation("PassHolder")
   passes_applied  Pass[]      @relation("PassApplicant")
@@ -76,17 +82,18 @@ model Pass {
 }
 
 model OtpRecord {
-  id          String   @id @default(uuid())
-  phone       String
+  id          String    @id @default(uuid())
+  phone       String    @unique
   otp_hash    String
   expires_at  DateTime
-  verified_at DateTime?
 }
 
 model RfidTag {
   id          String   @id @default(uuid())
   tag_id      String   @unique @default(uuid())
-  assigned_at DateTime @default(now())
+  
+  valid_from  DateTime @default(now())
+  valid_to    DateTime 
 
   user_id     String  
   user        User    @relation("RFID", fields: [user_id], references: [id])
