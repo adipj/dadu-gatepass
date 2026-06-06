@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -16,11 +10,14 @@ enum Role {
   STUDENT
   FACULTY
   VISITOR
+  HOSTEL_SUPERINTENDENT
+  CONFERENCE_SUPERVISOR
 }
 
 enum PassType {
   VISITOR
   CONFERENCE_PARTICIPANT
+  INVITED_VISITOR
   VEHICLE_RFID
 }
 
@@ -50,29 +47,31 @@ model User {
   role            Role
   phone           String      @unique
 
-  passes_held     Pass[]    @relation("PassHolder")
-  passes_applied  Pass[]    @relation("PassApplicant")
-  passes_approved Pass[]    @relation("PassApprover")
-  gate_logs       GateLog[] @relation("SecurityChecker")
+  passes_held     Pass[]      @relation("PassHolder")
+  passes_applied  Pass[]      @relation("PassApplicant")
+  passes_approved Pass[]      @relation("PassApprover")
+  gate_logs       GateLog[]   @relation("SecurityChecker")
+  rfid            RfidTag[]   @relation("RFID")
 }
 
 model Pass {
-  id           String     @id @default(uuid())
+  id           String       @id @default(uuid())
   type         PassType
-  status       PassStatus @default(PENDING)
+  status       PassStatus   @default(PENDING)
   valid_from   DateTime
   valid_until  DateTime
 
   holder_id    String
-  holder       User       @relation("PassHolder", fields: [holder_id], references: [id])
+  holder       User         @relation("PassHolder", fields: [holder_id], references: [id])
   
   applicant_id String?
-  applicant    User?      @relation("PassApplicant", fields: [applicant_id], references: [id])
+  applicant    User?        @relation("PassApplicant", fields: [applicant_id], references: [id])
   
   approved_by  String?
-  approver     User?      @relation("PassApprover", fields: [approved_by], references: [id])
+  approver     User?        @relation("PassApprover", fields: [approved_by], references: [id])
 
-  rfid_tag     RfidTag?
+  rfid_id      String?
+  rfid_tag     RfidTag?     @relation("RFID_Pass", fields: [rfid_id], references: [id])
   gate_logs    GateLog[]
 }
 
@@ -86,11 +85,13 @@ model OtpRecord {
 
 model RfidTag {
   id          String   @id @default(uuid())
-  tag_id      String   @unique @default(uuid()) // Simulated UUID
+  tag_id      String   @unique @default(uuid())
   assigned_at DateTime @default(now())
 
-  pass_id     String   @unique
-  pass        Pass     @relation(fields: [pass_id], references: [id])
+  user_id     String  
+  user        User    @relation("RFID", fields: [user_id], references: [id])
+
+  pass        Pass[]  @relation("RFID_Pass")
 }
 
 model GateLog {

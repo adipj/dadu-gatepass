@@ -1,12 +1,13 @@
 import { Router } from 'express';
-import { login } from '../controllers/auth';
-import { approvePass } from '../controllers/passController'; // From earlier
-import { scanQR, scanRFID } from '../controllers/gateController'; // From earlier
+import { login, signup } from '../controllers/auth';
+import { approvePass } from '../controllers/passController'; 
+import { scanQR, scanRFID } from '../controllers/gateController'; 
 import { requireAuth, requireRoles, swdApiKeyGuard } from '../middlewares/authGuard';
 
 const router = Router();
 
 router.post('/auth/login', login);
+router.post('/signup', signup);
 router.post('/gate/scan-qr', requireAuth, requireRoles(['GATE_SECURITY']), scanQR);
 router.post('/gate/scan-rfid', requireAuth, requireRoles(['GATE_SECURITY']), scanRFID);
 

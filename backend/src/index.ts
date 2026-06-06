@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import apiRoutes from './routes';
+import 'dotenv/config'
 
 const app = express();
 

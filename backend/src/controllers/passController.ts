@@ -1,16 +1,10 @@
 import { PrismaClient } from '@prisma/client';
-import { Request, Response } from 'express';
-
-interface AuthRequest extends Request {
-    user?: {
-        id: string;
-        role: string;
-    };
-}
+import { Response } from 'express';
+import { CustomReq } from '../types'
 
 const prisma = new PrismaClient();
 
-export const approvePass = async (req : AuthRequest, res : Response) => {
+export const approvePass = async (req : CustomReq, res : Response) => {
     const pass_id = req.params.pass_id as string;
     const approver_id = req.user!.id;
 
