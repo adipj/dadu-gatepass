@@ -31,6 +31,13 @@ export const scanQR = async (req : CustomReq, res : Response) => {
         data: { status : user.status === 'ON_CAMPUS' ? 'OFF_CAMPUS' : 'ON_CAMPUS' },
     })
 
+    if ((user.role === 'VISITOR' && action === 'EXIT') || (user.role !== 'VISITOR' && action === 'ENTRY')){
+        await prisma.pass.update({
+            where: { id: pass_id },
+            data: { status: 'EXPIRED' }
+        })
+    }
+
     await logGateAction(pass_id, security_id, action, 'QR');
     return res.json({ message: 'Access Granted', pass });
 };
@@ -60,6 +67,13 @@ export const scanRFID = async (req : CustomReq, res : Response) => {
         where : { tag_id },
         data: { status: rfid.status === 'ON_CAMPUS' ? 'OFF_CAMPUS' : 'ON_CAMPUS' },
     })
+
+    if(action === 'ENTRY'){
+        await prisma.pass.update({
+            where: { id: pass.id },
+            data: { status: 'EXPIRED' }
+        })
+    }
 
     await logGateAction(pass.id, security_id, action, 'RFID');
     return res.json({ message: 'Vehicle Access Granted', pass: rfid.pass });

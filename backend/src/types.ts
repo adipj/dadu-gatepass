@@ -13,7 +13,6 @@ export interface PassReq extends CustomReq {
         type:           PassType,
         valid_from:     string,
         valid_to:       string,
-        holder_id:      string,
         rfid_id?:       string
     }
 }

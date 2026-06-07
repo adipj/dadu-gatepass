@@ -30,7 +30,7 @@ export const visitorLogin = async (req: Request, res: Response) => {
     const phone = req.body.phone;
 
     const user = await prisma.user.findUnique({ where: { phone: phone } });
-    if (!user || !user.password_hash) {
+    if (!user) {
         return res.status(404).json({ error: 'User not found' });
     }
 

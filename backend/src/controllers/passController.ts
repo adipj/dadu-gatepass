@@ -77,14 +77,25 @@ export const rejectPass = async (req: CustomReq, res: Response) => {
 };
 
 export const createPass = async (req: PassReq, res: Response) => {
-    const { type, valid_from, valid_to, holder_id, rfid_id } = req.body;
+    const { type, valid_from, valid_to, rfid_id } = req.body;
     const applicant_id = req.user!.id;
+
+    if(rfid_id){
+        const rfid = await prisma.rfidTag.findUnique({ where: { id: rfid_id } });
+        if(!rfid){
+            return res.status(403).json({ error: "RFID doesn't exist" });
+        }
+        if(rfid.valid_to < new Date()){
+            return res.status(403).json({ error: "RFID expired" });
+        }
+    }
+
     const newPass = await prisma.pass.create({
         data: {
             type: type,
             valid_from: new Date(valid_from),
             valid_until: new Date(valid_to),
-            holder_id: holder_id,
+            holder_id: applicant_id,
             applicant_id: applicant_id,
             rfid_id: rfid_id || null
         }
@@ -92,7 +103,7 @@ export const createPass = async (req: PassReq, res: Response) => {
     return res.json({pass_id: newPass.id, message: 'Pass created successfully'});
 }
 
-export const BulkPass = async (req: BulkReq, res: Response) => {
+export const createBulkPass = async (req: BulkReq, res: Response) => {
     try {
         const { passes } = req.body;
         const applicant_id = req.user!.id;
