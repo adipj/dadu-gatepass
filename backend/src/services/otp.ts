@@ -24,6 +24,9 @@ export const verifyOTP = async (phone: string, otp: string)  => {
     if (!otp_record || otp_hash != otp_record.otp_hash){
         return false;
     }
+    if(otp_record.expires_at < new Date()) {
+        return false;
+    }
     await prisma.otpRecord.delete({ where: {phone: phone} });
-    return otp_record.expires_at >= new Date();
+    return true;
 };
