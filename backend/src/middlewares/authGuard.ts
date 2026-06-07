@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { CustomReq, BulkReq } from '../types';
+import { CustomReq } from '../types';
 import { Role } from '@prisma/client';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
@@ -30,7 +30,7 @@ export const requireRoles = (allowedRoles: string[]) => {
 };
 
 export const swdApiKeyGuard = (req: CustomReq, res: Response, next: NextFunction) => {
-    const apiKey = req.headers['x-swd-api-key'];
+    const apiKey = req.headers['swd-api-key'];
     if (apiKey !== process.env.SWD_API_KEY) {
         return res.status(403).json({ error: 'Forbidden: Invalid SWD API Key' });
     }

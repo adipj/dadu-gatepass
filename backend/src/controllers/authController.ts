@@ -1,4 +1,4 @@
-import { PrismaClient, CampusStatus } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { Request, Response } from 'express';
@@ -27,13 +27,15 @@ export const residentLogin = async (req: Request, res: Response) => {
 };
 
 export const visitorLogin = async (req: Request, res: Response) => {
-    const { phone } = req.body;
+    const phone = req.body.phone;
+
     const user = await prisma.user.findUnique({ where: { phone: phone } });
-    if(!user){
+    if (!user || !user.password_hash) {
         return res.status(404).json({ error: 'User not found' });
     }
-    await sendMockOTP(phone);
-    res.status(200).json({ message: 'OTP sent successfully' });
+
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
+    res.json({ token, role: user.role });
 }
 
 export const residentSignup = async (req: Request, res: Response) => {
@@ -66,3 +68,13 @@ export const visitorSignup = async (req: Request, res: Response) => {
     });
     res.json({ id: newUser.id, role: newUser.role });
 };
+
+export const visitorOTP = async (req: Request, res: Response) => {
+    const { phone } = req.body;
+    const user = await prisma.user.findUnique({ where: { phone: phone } });
+    if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+    await sendMockOTP(phone);
+    res.status(200).json({ message: 'OTP sent successfully' });
+}
