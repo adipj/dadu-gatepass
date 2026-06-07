@@ -10,6 +10,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 export const residentLogin = async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
+    if (!email.endsWith('@hyderabad.bits-pilani.ac.in')) {
+        return res.status(403).json({ error: 'Must use institutional email' });
+    }
+
     const user = await prisma.user.findUnique({ where: { email: email } });
     if (!user || !user.password_hash) {
         return res.status(404).json({ error: 'User not found or is a temporary visitor' });
@@ -34,6 +38,10 @@ export const visitorLogin = async (req: Request, res: Response) => {
 
 export const residentSignup = async (req: Request, res: Response) => {
     const { name, email, password, phone, role } = req.body;
+
+    if (!email.endsWith('@hyderabad.bits-pilani.ac.in')) {
+        return res.status(403).json({ error: 'Must use institutional email' });
+    }
 
     const user = await prisma.user.findUnique({ where: { email: email } });
     if(user){

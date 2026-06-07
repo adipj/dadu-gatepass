@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { CustomReq } from '../types';
+import { CustomReq, BulkReq } from '../types';
+import { Role } from '@prisma/client';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
@@ -12,7 +13,7 @@ export const requireAuth = (req: CustomReq, res: Response, next: NextFunction) =
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        req.user = decoded as {id: string; role: string};
+        req.user = decoded as {id: string; role: Role};
         next();
     } catch (err) {
         res.status(403).json({ error: 'Forbidden: Invalid token' });

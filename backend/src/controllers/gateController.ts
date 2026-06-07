@@ -46,12 +46,6 @@ export const scanRFID = async (req : CustomReq, res : Response) => {
     if (!rfid || rfid.valid_to < new Date()) {
         return res.status(403).json({ error: 'Access Denied' });
     }
-    const action = rfid.status === 'ON_CAMPUS' ? 'EXIT' : 'ENTRY';
-    await prisma.rfidTag.update({
-        where : { tag_id },
-        data: { status: rfid.status === 'ON_CAMPUS' ? 'OFF_CAMPUS' : 'ON_CAMPUS' },
-    })
-
     const pass = rfid.pass[0];
     if(!pass){
         return res.status(403).json({ error: 'No pass linked to this tag' });
@@ -60,6 +54,13 @@ export const scanRFID = async (req : CustomReq, res : Response) => {
         await logGateAction(pass.id, security_id, 'DENIED', 'RFID');
         return res.status(403).json({ error: 'Pass not approved' });
     }
+
+    const action = rfid.status === 'ON_CAMPUS' ? 'EXIT' : 'ENTRY';
+    await prisma.rfidTag.update({
+        where : { tag_id },
+        data: { status: rfid.status === 'ON_CAMPUS' ? 'OFF_CAMPUS' : 'ON_CAMPUS' },
+    })
+
     await logGateAction(pass.id, security_id, action, 'RFID');
     return res.json({ message: 'Vehicle Access Granted', pass: rfid.pass });
 };

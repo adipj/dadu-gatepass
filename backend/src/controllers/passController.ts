@@ -79,7 +79,7 @@ export const rejectPass = async (req: CustomReq, res: Response) => {
 export const createPass = async (req: PassReq, res: Response) => {
     const { type, valid_from, valid_to, holder_id, rfid_id } = req.body;
     const applicant_id = req.user!.id;
-    await prisma.pass.create({
+    const newPass = await prisma.pass.create({
         data: {
             type: type,
             valid_from: new Date(valid_from),
@@ -89,13 +89,13 @@ export const createPass = async (req: PassReq, res: Response) => {
             rfid_id: rfid_id || null
         }
     });
-    return res.json({message: 'Pass created successfully'});
+    return res.json({pass_id: newPass.id, message: 'Pass created successfully'});
 }
 
 export const BulkPass = async (req: BulkReq, res: Response) => {
     try {
         const { passes } = req.body;
-        const applicant_id = req.user.id;
+        const applicant_id = req.user!.id;
 
         const databasePasses = await Promise.all(
             
@@ -105,7 +105,7 @@ export const BulkPass = async (req: BulkReq, res: Response) => {
 
                 const user = await prisma.user.upsert({
                     where: { phone: phone },
-                    create: { phone: phone, name: name, role: req.user.holderRole },
+                    create: { phone: phone, name: name, role: 'VISITOR' },
                     update: {}
                 })
                 const holder_id = user.id;

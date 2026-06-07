@@ -18,11 +18,7 @@ export interface PassReq extends CustomReq {
     }
 }
 
-export interface BulkReq extends Request {
-    user : {
-        id:         string;
-        holderRole: Role;
-    }
+export interface BulkReq extends CustomReq {
     body: {
         passes: {
             name:       string,
