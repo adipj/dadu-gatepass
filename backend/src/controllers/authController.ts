@@ -9,14 +9,13 @@ const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 export const residentLogin = async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
-    if (!email.endsWith('@hyderabad.bits-pilani.ac.in')) {
-        return res.status(403).json({ error: 'Must use institutional email' });
-    }
-
     try {
+        if (!email.endsWith('@hyderabad.bits-pilani.ac.in')) {
+            return res.status(403).json({ error: 'Must use institutional email' });
+        }
         const user = await prisma.user.findUnique({ where: { email: email } });
         if (!user || !user.password_hash) {
-            return res.status(404).json({ error: 'User not found or is a temporary visitor' });
+            return res.status(404).json({ error: 'Username or pwd is incorrect' });
         }
     
         const valid = await bcrypt.compare(password, user.password_hash);

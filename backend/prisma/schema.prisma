@@ -97,7 +97,7 @@ model RfidTag {
   status      CampusStatus  @default(ON_CAMPUS)
 
   valid_from  DateTime      @default(now())
-  valid_to    DateTime 
+  valid_until DateTime 
 
   vehicleNum  String        @unique
   pass        Pass[]        @relation("RFID_Pass")

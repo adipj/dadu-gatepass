@@ -91,7 +91,7 @@ export const rejectPass = async (req: CustomReq, res: Response) => {
 };
 
 export const createPass = async (req: PassReq, res: Response) => {
-    const { type, valid_from, valid_to, rfid_id } = req.body;
+    const { type, valid_from, valid_until, rfid_id } = req.body;
     const applicant_id = req.user!.id;
 
     if(rfid_id){
@@ -99,7 +99,7 @@ export const createPass = async (req: PassReq, res: Response) => {
         if(!rfid){
             return res.status(403).json({ error: "RFID doesn't exist" });
         }
-        if(rfid.valid_to < new Date()){
+        if(rfid.valid_until < new Date()){
             return res.status(403).json({ error: "RFID expired" });
         }
     }
@@ -108,7 +108,7 @@ export const createPass = async (req: PassReq, res: Response) => {
         data: {
             type: type,
             valid_from: new Date(valid_from),
-            valid_until: new Date(valid_to),
+            valid_until: new Date(valid_until),
             holder_id: applicant_id,
             applicant_id: applicant_id,
             rfid_id: rfid_id || null
@@ -138,7 +138,7 @@ export const createBulkPass = async (req: BulkReq, res: Response) => {
                 return {
                     type: pass.type,
                     valid_from: new Date(pass.valid_from),
-                    valid_until: new Date(pass.valid_to),
+                    valid_until: new Date(pass.valid_until),
                     holder_id: holder_id,
                     applicant_id: applicant_id
                 };
@@ -159,20 +159,20 @@ export const createBulkPass = async (req: BulkReq, res: Response) => {
 export const createRFID = async (req: Request, res: Response) => {
     const vehicleNum = req.params.vehicleNum as string;
     const valid_from = new Date();
-    const valid_to = new Date(valid_from);
-    valid_to.setFullYear(valid_from.getFullYear() + 1);
+    const valid_until = new Date(valid_from);
+    valid_until.setFullYear(valid_from.getFullYear() + 1);
     await prisma.rfidTag.upsert({
         where: {
             vehicleNum: vehicleNum
         },
         update: {
             valid_from: valid_from,
-            valid_to: valid_to
+            valid_until: valid_until
         },
         create: {
             vehicleNum: vehicleNum,
             valid_from: valid_from,
-            valid_to: valid_to
+            valid_until: valid_until
         }
     })
     return res.json({message: "RFID Created/Updated Successfully"});
