@@ -12,9 +12,13 @@ enum Role {
   VISITOR
   HOSTEL_SUPERINTENDENT
   CONFERENCE_SUPERVISOR
+  ADMIN
+  GATE_SECURITY
 }
 
 enum PassType {
+  STUDENT
+  FACULTY
   VISITOR
   CONFERENCE_PARTICIPANT
   INVITED_VISITOR
@@ -39,25 +43,24 @@ enum ScanMethod {
   RFID
 }
 
-enum Status {
+enum CampusStatus {
   ON_CAMPUS
   OFF_CAMPUS
 }
 
 model User {
-  id              String      @id @default(uuid())
+  id              String        @id @default(uuid())
   name            String
-  email           String?     @unique
+  email           String?       @unique
   password_hash   String?     
   role            Role
-  phone           String      @unique
-  status          Status
+  phone           String        @unique
+  status          CampusStatus  @default(OFF_CAMPUS)
 
-  passes_held     Pass[]      @relation("PassHolder")
-  passes_applied  Pass[]      @relation("PassApplicant")
-  passes_approved Pass[]      @relation("PassApprover")
-  gate_logs       GateLog[]   @relation("SecurityChecker")
-  rfid            RfidTag[]   @relation("RFID")
+  passes_held     Pass[]        @relation("PassHolder")
+  passes_applied  Pass[]        @relation("PassApplicant")
+  passes_approved Pass[]        @relation("PassApprover")
+  gate_logs       GateLog[]     @relation("SecurityChecker")
 }
 
 model Pass {
@@ -89,16 +92,15 @@ model OtpRecord {
 }
 
 model RfidTag {
-  id          String   @id @default(uuid())
-  tag_id      String   @unique @default(uuid())
-  
-  valid_from  DateTime @default(now())
+  id          String        @id @default(uuid())
+  tag_id      String        @unique @default(uuid())
+  status      CampusStatus  @default(ON_CAMPUS)
+
+  valid_from  DateTime      @default(now())
   valid_to    DateTime 
 
-  user_id     String  
-  user        User    @relation("RFID", fields: [user_id], references: [id])
-
-  pass        Pass[]  @relation("RFID_Pass")
+  vehicleNum  String        @unique
+  pass        Pass[]        @relation("RFID_Pass")
 }
 
 model GateLog {

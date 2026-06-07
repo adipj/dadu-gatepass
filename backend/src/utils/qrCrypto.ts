@@ -16,7 +16,7 @@ export function generateQRData(pass_id: string) {
 }
 
 export function verifyQRData(pass_id: string, time: number, sig: string): boolean {
-    if (Date.now() - time > 120000) return false; //2 min
+    if (Date.now() - time > 25000) return false; 
 
     const expectedSig = crypto
         .createHmac('sha256', SECRET)
