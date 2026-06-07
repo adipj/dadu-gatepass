@@ -1,4 +1,4 @@
-import { PassType } from '@prisma/client';
+import { CampusStatus, PassType } from '@prisma/client';
 import { Request, Response } from 'express';
 import prisma from '../../prisma/prisma';
 

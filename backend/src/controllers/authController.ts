@@ -48,7 +48,7 @@ export const visitorLogin = async (req: Request, res: Response) => {
 export const residentSignup = async (req: Request, res: Response) => {
     const { name, email, password, phone, role } = req.body;
     if(role !== 'FACULTY'){
-        return res.status(500).json({ error: "Unauthorized" });
+        return res.status(403).json({ error: "Unauthorized" });
     }
 
     try {
@@ -91,7 +91,7 @@ export const visitorOTP = async (req: Request, res: Response) => {
     try{
         const user = await prisma.user.findUnique({ where: { phone: phone } });
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            return res.status(404).json({ error: 'User not found. Sign up first' });
         }
         await sendMockOTP(phone);
         res.status(200).json({ message: 'OTP sent successfully' });

@@ -48,8 +48,12 @@ export const scanRFID = async (req : CustomReq, res : Response) => {
         where: { tag_id },
         include: { 
             pass: {
-                where: { status : 'APPROVED' },
-                orderBy: { valid_until: 'desc' }
+                where: { 
+                    status : 'APPROVED',
+                    valid_from: { lt: new Date() },
+                    valid_until: { gt: new Date() } 
+                },
+                orderBy: { valid_from: 'asc' }
             }
         }
     });
