@@ -95,17 +95,32 @@ export const createPass = async (req: PassReq, res: Response) => {
 export const BulkPass = async (req: BulkReq, res: Response) => {
     try {
         const { passes } = req.body;
-        const applicant_id = req.user!.id;
-        const databasePasses = passes.map(pass => {
-            return {
-                type: pass.type,
-                valid_from: new Date(pass.valid_from),
-                valid_until: new Date(pass.valid_to),
-                holder_id: pass.holder_id,
-                applicant_id: applicant_id
-            }
-        });
-        const result = await prisma.pass.createMany({
+        const applicant_id = req.user.id;
+
+        const databasePasses = await Promise.all(
+            
+            passes.map(async pass => {
+                const phone = pass.phone;
+                const name = pass.name;
+
+                const user = await prisma.user.upsert({
+                    where: { phone: phone },
+                    create: { phone: phone, name: name, role: req.user.holderRole },
+                    update: {}
+                })
+                const holder_id = user.id;
+
+                return {
+                    type: pass.type,
+                    valid_from: new Date(pass.valid_from),
+                    valid_until: new Date(pass.valid_to),
+                    holder_id: holder_id,
+                    applicant_id: applicant_id
+                };
+            })
+        );
+        
+        await prisma.pass.createMany({
             data: databasePasses,
             skipDuplicates: true
         })

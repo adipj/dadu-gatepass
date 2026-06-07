@@ -1,10 +1,10 @@
-import { PassType } from "@prisma/client";
+import { PassType, Role } from "@prisma/client";
 import { Request } from "express";
 
 export interface CustomReq extends Request {
     user? : {
-        id: string;
-        role: string;
+        id:     string;
+        role:   string;
     }
 }
 
@@ -18,13 +18,18 @@ export interface PassReq extends CustomReq {
     }
 }
 
-export interface BulkReq extends CustomReq {
+export interface BulkReq extends Request {
+    user : {
+        id:         string;
+        holderRole: Role;
+    }
     body: {
         passes: {
-            type: PassType,
+            name:       string,
+            phone:      string,
+            type:       PassType,
             valid_from: string,
-            valid_to: string,
-            holder_id: string
+            valid_to:   string
         }[]
     }
 }
