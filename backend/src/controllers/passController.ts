@@ -19,7 +19,10 @@ export const getPassesList = async (req: CustomReq, res: Response) => {
         },
         include : {
             applicant: {
-                select : {name: true, phone: true}
+                select: { name: true, phone: true }
+            },
+            holder: {
+                select: { name: true, phone: true }
             }
         }
     })
