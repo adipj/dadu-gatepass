@@ -1,8 +1,16 @@
 import { Router } from 'express';
 import { approvePass, rejectPass } from '../controllers/passController';
-import { requireAuth, requireRoles, swdApiKeyGuard } from '../middlewares/authGuard';
+import { requireAuth, requireRoles } from '../middlewares/authGuard';
+import { getPassesList } from '../controllers/passController';
 
 const router = Router();
+
+router.get(
+    '/',
+    requireAuth, 
+    requireRoles(['HOSTEL_SUPERINTENDENT', 'CONFERENCE_SUPERVISOR', 'GATE_SECURITY', 'ADMIN']),
+    getPassesList
+)
 
 router.put(
     '/:pass_id/approve-hostel',

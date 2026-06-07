@@ -1,21 +1,16 @@
-import { PassType, PrismaClient } from '@prisma/client';
+import { PassType } from '@prisma/client';
 import { Response, Request } from 'express';
 import { CustomReq, PassReq, BulkReq } from '../types'
 import { generateQRData } from '../utils/qrCrypto';
-
-const prisma = new PrismaClient();
+import prisma from '../../prisma/prisma';
 
 export const getPassesList = async (req: CustomReq, res: Response) => {
-    const approver_id = req.user!.id;
-    const approver = await prisma.user.findUnique({ where: { id: approver_id } });
-    if(!approver){
-        return res.status(401).json({ error: 'Not authorised' });
-    }
+    const role = req.user!.role;
     let validApplicants: PassType[] = [];
-    if(approver.role === 'HOSTEL_SUPERINTENDENT') validApplicants = ['INVITED_VISITOR', 'STUDENT'];
-    else if(approver.role === 'CONFERENCE_SUPERVISOR') validApplicants = ['CONFERENCE_PARTICIPANT'];
-    else if(approver.role === 'ADMIN') validApplicants = ['VEHICLE_RFID', 'FACULTY'];
-    else if(approver.role === 'GATE_SECURITY') validApplicants = ['VISITOR']
+    if(role === 'HOSTEL_SUPERINTENDENT') validApplicants = ['INVITED_VISITOR', 'STUDENT'];
+    else if(role === 'CONFERENCE_SUPERVISOR') validApplicants = ['CONFERENCE_PARTICIPANT'];
+    else if(role === 'ADMIN') validApplicants = ['VEHICLE_RFID', 'FACULTY'];
+    else if(role === 'GATE_SECURITY') validApplicants = ['VISITOR']
 
     const passes = await prisma.pass.findMany({
         where : { 
@@ -29,6 +24,22 @@ export const getPassesList = async (req: CustomReq, res: Response) => {
         }
     })
 
+    return res.json(passes);
+};
+
+export const getMyPasses = async (req: CustomReq, res: Response) => {
+    const id = req.user!.id;
+    const passes = await prisma.pass.findMany({
+        where: { holder_id: id },
+        include: {
+            approver: {
+                select: { name: true }
+            }
+        },
+        orderBy: {
+            valid_from: 'desc'
+        }
+    });
     return res.json(passes);
 };
 
@@ -164,12 +175,17 @@ export const createRFID = async (req: Request, res: Response) => {
     return res.json({message: "RFID Created/Updated Successfully"});
 }
 
-export const getQR = async (req: Request, res: Response) => {
+export const getQR = async (req: CustomReq, res: Response) => {
     const pass_id = req.params.pass_id as string;
     const pass = await prisma.pass.findUnique({ where: { id: pass_id } });
     if (!pass || pass.status !== 'APPROVED') {
         return res.status(403).json({ error: 'Pass not found or not approved' });
     }
+    const id = req.user!.id;
+    if(id !== pass.holder_id){
+        return res.status(403).json({ error: 'Not authorised to view this QR' });
+    }
+
     const QRData = await generateQRData(pass_id);
     return res.json(QRData);
 };

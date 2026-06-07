@@ -1,9 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../../prisma/prisma';
 import { verifyQRData } from '../utils/qrCrypto';
 import { Response } from 'express';
 import { CustomReq } from '../types';
-
-const prisma = new PrismaClient();
 
 export const scanQR = async (req : CustomReq, res : Response) => {
     const { pass_id, time, sig } = req.body;
@@ -48,7 +46,12 @@ export const scanRFID = async (req : CustomReq, res : Response) => {
 
     const rfid = await prisma.rfidTag.findUnique({
         where: { tag_id },
-        include: { pass: true }
+        include: { 
+            pass: {
+                where: { status : 'APPROVED' },
+                orderBy: { valid_until: 'desc' }
+            }
+        }
     });
     if (!rfid || rfid.valid_to < new Date()) {
         return res.status(403).json({ error: 'Access Denied' });
@@ -56,10 +59,6 @@ export const scanRFID = async (req : CustomReq, res : Response) => {
     const pass = rfid.pass[0];
     if(!pass){
         return res.status(403).json({ error: 'No pass linked to this tag' });
-    }
-    if(pass.status !== 'APPROVED'){
-        await logGateAction(pass.id, security_id, 'DENIED', 'RFID');
-        return res.status(403).json({ error: 'Pass not approved' });
     }
 
     const action = rfid.status === 'ON_CAMPUS' ? 'EXIT' : 'ENTRY';

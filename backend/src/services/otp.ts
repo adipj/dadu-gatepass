@@ -1,7 +1,5 @@
 import crypto from 'node:crypto';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../../prisma/prisma';
 
 export const sendMockOTP = async (phone: string) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit OTP

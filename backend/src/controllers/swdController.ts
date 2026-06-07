@@ -1,11 +1,11 @@
-import { PrismaClient, PassType } from '@prisma/client';
+import { PassType } from '@prisma/client';
 import { Request, Response } from 'express';
+import prisma from '../../prisma/prisma';
 
-const prisma = new PrismaClient();
 
 export const swdCreatePass = async (req: Request, res: Response) => {
     try {
-        const { studentEmail, name, type, valid_from, valid_until, phone } = req.body;
+        const { studentEmail, name, type, valid_from, valid_until, phone, hashed_password } = req.body;
 
         if (!studentEmail.endsWith('@hyderabad.bits-pilani.ac.in')) {
             return res.status(400).json({ error: 'Invalid institutional email' });
@@ -18,7 +18,8 @@ export const swdCreatePass = async (req: Request, res: Response) => {
                 email: studentEmail,
                 name: name,  
                 role: 'STUDENT',
-                phone: phone,        
+                phone: phone,      
+                password_hash: hashed_password  
             }
         });
 
