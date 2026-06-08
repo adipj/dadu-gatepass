@@ -34,8 +34,8 @@ export const swdCreatePass = async (req: Request, res: Response) => {
         });
 
         return res.status(201).json({ pass_id: pass.id, message: 'Pass created successfully' });
-    } catch (err) {
-        return res.status(500).json({ error: 'Failed to create pass' });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
     }
 };
 
@@ -57,8 +57,8 @@ export const swdDeletePass = async (req: Request, res: Response) => {
         });
 
         return res.json({ message: 'Pass expired successfully' });
-    } catch (err) {
-        return res.status(500).json({ error: 'Failed to expire pass' });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
     }
 };
 
@@ -79,7 +79,7 @@ export const swdGetPasses = async (req: Request, res: Response) => {
         });
 
         return res.json(passes);
-    } catch (err) {
-        return res.status(500).json({ error: 'Failed to fetch passes' });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
     }
 };

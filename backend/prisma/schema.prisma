@@ -49,58 +49,52 @@ enum CampusStatus {
 }
 
 model User {
-  id              String        @id @default(uuid())
+  id              String       @id @default(uuid())
   name            String
-  email           String?       @unique
-  password_hash   String?     
+  email           String?      @unique
+  password_hash   String?
   role            Role
-  phone           String        @unique
-  status          CampusStatus  @default(OFF_CAMPUS)
-
-  passes_held     Pass[]        @relation("PassHolder")
-  passes_applied  Pass[]        @relation("PassApplicant")
-  passes_approved Pass[]        @relation("PassApprover")
-  gate_logs       GateLog[]     @relation("SecurityChecker")
+  phone           String       @unique
+  status          CampusStatus @default(OFF_CAMPUS)
+  gate_logs       GateLog[]    @relation("SecurityChecker")
+  passes_applied  Pass[]       @relation("PassApplicant")
+  passes_approved Pass[]       @relation("PassApprover")
+  passes_held     Pass[]       @relation("PassHolder")
 }
 
 model Pass {
-  id           String       @id @default(uuid())
+  id           String     @id @default(uuid())
   type         PassType
-  status       PassStatus   @default(PENDING)
+  status       PassStatus @default(PENDING)
   valid_from   DateTime
   valid_until  DateTime
-
   holder_id    String
-  holder       User         @relation("PassHolder", fields: [holder_id], references: [id])
-  
   applicant_id String?
-  applicant    User?        @relation("PassApplicant", fields: [applicant_id], references: [id])
-  
   approved_by  String?
-  approver     User?        @relation("PassApprover", fields: [approved_by], references: [id])
-
   rfid_id      String?
-  rfid_tag     RfidTag?     @relation("RFID_Pass", fields: [rfid_id], references: [id])
+
   gate_logs    GateLog[]
+  applicant    User?      @relation("PassApplicant", fields: [applicant_id], references: [id])
+  approver     User?      @relation("PassApprover", fields: [approved_by], references: [id])
+  holder       User       @relation("PassHolder", fields: [holder_id], references: [id])
+  rfid_tag     RfidTag?   @relation("RFID_Pass", fields: [rfid_id], references: [id])
 }
 
 model OtpRecord {
-  id          String    @id @default(uuid())
-  phone       String    @unique
-  otp_hash    String
-  expires_at  DateTime
+  id         String   @id @default(uuid())
+  phone      String   @unique
+  otp_hash   String
+  expires_at DateTime
 }
 
 model RfidTag {
-  id          String        @id @default(uuid())
-  tag_id      String        @unique @default(uuid())
-  status      CampusStatus  @default(ON_CAMPUS)
-
-  valid_from  DateTime      @default(now())
-  valid_until DateTime 
-
-  vehicleNum  String        @unique
-  pass        Pass[]        @relation("RFID_Pass")
+  id          String       @id @default(uuid())
+  tag_id      String       @unique @default(uuid())
+  status      CampusStatus @default(ON_CAMPUS)
+  valid_from  DateTime     @default(now())
+  vehicleNum  String       @unique
+  valid_until DateTime
+  pass        Pass[]       @relation("RFID_Pass")
 }
 
 model GateLog {
@@ -108,10 +102,8 @@ model GateLog {
   action     GateAction
   method     ScanMethod
   timestamp  DateTime   @default(now())
-
   pass_id    String
-  pass       Pass       @relation(fields: [pass_id], references: [id])
-
   checked_by String
   security   User       @relation("SecurityChecker", fields: [checked_by], references: [id])
+  pass       Pass       @relation(fields: [pass_id], references: [id])
 }

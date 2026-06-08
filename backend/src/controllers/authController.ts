@@ -23,8 +23,8 @@ export const residentLogin = async (req: Request, res: Response) => {
     
         const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
         res.json({ token, role: user.role });
-    } catch (err) {
-        res.status(500).json({ error : "Something went wrong" });
+    } catch (err : any) {
+        res.status(500).json({ error : err.message });
     }
 };
 
@@ -39,14 +39,14 @@ export const visitorLogin = async (req: Request, res: Response) => {
     
         const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
         res.json({ token, role: user.role });
-    } catch (err) {
-        res.status(500).json({ error: "Something went wrong" });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
     }
 }
 
 export const residentSignup = async (req: Request, res: Response) => {
     const { name, email, password, phone, role } = req.body;
-    if(role !== 'FACULTY'){
+    if(role !== 'FACULTY'){     //students get auto signed up when requesting a pass through swd
         return res.status(403).json({ error: "Unauthorized" });
     }
 
@@ -64,8 +64,8 @@ export const residentSignup = async (req: Request, res: Response) => {
             data: { name: name, email: email, password_hash: hashed, role: role, phone: phone }
         });
         res.json({ id: newUser.id, role: newUser.role });
-    } catch (err) {
-        res.status(500).json({ error: "Something went wrong" });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
     }
 };
 
@@ -80,8 +80,8 @@ export const visitorSignup = async (req: Request, res: Response) => {
             data: { name: name, role: 'VISITOR', phone: phone }
         });
         res.json({ id: newUser.id, role: newUser.role });
-    } catch (err) {
-        res.status(500).json({ error: "Something went wrong" });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
     }
 };
 
@@ -94,7 +94,7 @@ export const visitorOTP = async (req: Request, res: Response) => {
         }
         await sendMockOTP(phone);
         res.status(200).json({ message: 'OTP sent successfully' });
-    } catch (err) {
-        res.status(500).json({ error: "Something went wrong" });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
     }
 }

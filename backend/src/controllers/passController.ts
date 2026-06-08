@@ -6,44 +6,53 @@ import prisma from '../../prisma/prisma';
 
 export const getPassesList = async (req: CustomReq, res: Response) => {
     const role = req.user!.role;
-    let validApplicants: PassType[] = [];
-    if(role === 'HOSTEL_SUPERINTENDENT') validApplicants = ['INVITED_VISITOR', 'STUDENT'];
-    else if(role === 'CONFERENCE_SUPERVISOR') validApplicants = ['CONFERENCE_PARTICIPANT'];
-    else if(role === 'ADMIN') validApplicants = ['VEHICLE_RFID', 'FACULTY'];
-    else if(role === 'GATE_SECURITY') validApplicants = ['VISITOR']
 
-    const passes = await prisma.pass.findMany({
-        where : { 
-            status: 'PENDING',
-            type:  { in: validApplicants }
-        },
-        include : {
-            applicant: {
-                select: { name: true, phone: true }
+    try{
+        let validApplicants: PassType[] = [];
+        if(role === 'HOSTEL_SUPERINTENDENT') validApplicants = ['INVITED_VISITOR', 'STUDENT'];
+        else if(role === 'CONFERENCE_SUPERVISOR') validApplicants = ['CONFERENCE_PARTICIPANT'];
+        else if(role === 'ADMIN') validApplicants = ['VEHICLE_RFID', 'FACULTY'];
+        else if(role === 'GATE_SECURITY') validApplicants = ['VISITOR']
+    
+        const passes = await prisma.pass.findMany({
+            where : { 
+                status: 'PENDING',
+                type:  { in: validApplicants }
             },
-            holder: {
-                select: { name: true, phone: true }
+            include : {
+                applicant: {
+                    select: { name: true, phone: true }
+                },
+                holder: {
+                    select: { name: true, phone: true }
+                }
             }
-        }
-    })
-
-    return res.json(passes);
+        })
+    
+        return res.json(passes);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
 };
 
 export const getMyPasses = async (req: CustomReq, res: Response) => {
     const id = req.user!.id;
-    const passes = await prisma.pass.findMany({
-        where: { holder_id: id },
-        include: {
-            approver: {
-                select: { name: true }
+    try {
+        const passes = await prisma.pass.findMany({
+            where: { holder_id: id },
+            include: {
+                approver: {
+                    select: { name: true }
+                }
+            },
+            orderBy: {
+                valid_from: 'desc'
             }
-        },
-        orderBy: {
-            valid_from: 'desc'
-        }
-    });
-    return res.json(passes);
+        });
+        return res.json(passes);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
 };
 
 export const approvePass = async (req : CustomReq, res : Response) => {
@@ -63,8 +72,8 @@ export const approvePass = async (req : CustomReq, res : Response) => {
         });
 
         res.json(updatedPass);
-    } catch (error) {
-        res.status(500).json({ error: 'Internal server error' });
+    } catch (err : any) {
+        res.status(500).json({ error: err.message });
     }
 };
 
@@ -85,8 +94,8 @@ export const rejectPass = async (req: CustomReq, res: Response) => {
         });
 
         res.json(updatedPass);
-    } catch (error) {
-        res.status(500).json({ error: 'Internal server error' });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
     }
 };
 
@@ -94,27 +103,31 @@ export const createPass = async (req: PassReq, res: Response) => {
     const { type, valid_from, valid_until, rfid_id } = req.body;
     const applicant_id = req.user!.id;
 
-    if(rfid_id){
-        const rfid = await prisma.rfidTag.findUnique({ where: { id: rfid_id } });
-        if(!rfid){
-            return res.status(403).json({ error: "RFID doesn't exist" });
+    try{
+        if(rfid_id){
+            const rfid = await prisma.rfidTag.findUnique({ where: { id: rfid_id } });
+            if(!rfid){
+                return res.status(403).json({ error: "RFID doesn't exist" });
+            }
+            if(rfid.valid_until < new Date()){
+                return res.status(403).json({ error: "RFID expired" });
+            }
         }
-        if(rfid.valid_until < new Date()){
-            return res.status(403).json({ error: "RFID expired" });
-        }
+    
+        const newPass = await prisma.pass.create({
+            data: {
+                type: type,
+                valid_from: new Date(valid_from),
+                valid_until: new Date(valid_until),
+                holder_id: applicant_id,
+                applicant_id: applicant_id,
+                rfid_id: rfid_id || null
+            }
+        });
+        return res.json({pass_id: newPass.id, message: 'Pass created successfully'});
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
     }
-
-    const newPass = await prisma.pass.create({
-        data: {
-            type: type,
-            valid_from: new Date(valid_from),
-            valid_until: new Date(valid_until),
-            holder_id: applicant_id,
-            applicant_id: applicant_id,
-            rfid_id: rfid_id || null
-        }
-    });
-    return res.json({pass_id: newPass.id, message: 'Pass created successfully'});
 }
 
 export const createBulkPass = async (req: BulkReq, res: Response) => {
@@ -151,8 +164,8 @@ export const createBulkPass = async (req: BulkReq, res: Response) => {
         })
     
         return res.status(200).json({ message: "Successfullly created passes" });
-    } catch (err) {
-        return res.status(500).json({ error: "Something went wrong : passController/BulkPass" });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
     }
 }
 
@@ -161,34 +174,42 @@ export const createRFID = async (req: Request, res: Response) => {
     const valid_from = new Date();
     const valid_until = new Date(valid_from);
     valid_until.setFullYear(valid_from.getFullYear() + 1);
-    await prisma.rfidTag.upsert({
-        where: {
-            vehicleNum: vehicleNum
-        },
-        update: {
-            valid_from: valid_from,
-            valid_until: valid_until
-        },
-        create: {
-            vehicleNum: vehicleNum,
-            valid_from: valid_from,
-            valid_until: valid_until
-        }
-    })
-    return res.json({message: "RFID Created/Updated Successfully"});
+    try {
+        await prisma.rfidTag.upsert({
+            where: {
+                vehicleNum: vehicleNum
+            },
+            update: {
+                valid_from: valid_from,
+                valid_until: valid_until
+            },
+            create: {
+                vehicleNum: vehicleNum,
+                valid_from: valid_from,
+                valid_until: valid_until
+            }
+        })
+        return res.json({message: "RFID Created/Updated Successfully"});
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
 }
 
 export const getQR = async (req: CustomReq, res: Response) => {
     const pass_id = req.params.pass_id as string;
-    const pass = await prisma.pass.findUnique({ where: { id: pass_id } });
-    if (!pass || pass.status !== 'APPROVED') {
-        return res.status(403).json({ error: 'Pass not found or not approved' });
+    try{
+        const pass = await prisma.pass.findUnique({ where: { id: pass_id } });
+        if (!pass || pass.status !== 'APPROVED') {
+            return res.status(403).json({ error: 'Pass not found or not approved' });
+        }
+        const id = req.user!.id;
+        if(id !== pass.holder_id){
+            return res.status(403).json({ error: 'Not authorised to view this QR' });
+        }
+    
+        const QRData = await generateQRData(pass_id);
+        return res.json(QRData);
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
     }
-    const id = req.user!.id;
-    if(id !== pass.holder_id){
-        return res.status(403).json({ error: 'Not authorised to view this QR' });
-    }
-
-    const QRData = await generateQRData(pass_id);
-    return res.json(QRData);
 };
